@@ -105,6 +105,131 @@ http://localhost:3018
 Use Chrome or Edge desktop. Safari and Firefox do not expose Web Serial for this
 prototype.
 
+## BLE Control Prototype
+
+The firmware also advertises a BLE control service named:
+
+```txt
+AgentVis-C3
+```
+
+The dashboard can connect to it through Web Bluetooth from Chrome or Edge. BLE
+is for short control commands and notifications only: `INFO`, `PING`,
+`STATE:*`, `TEXT:*`, `ANIM:PUBLIC_LOTTIE`, `ANIM:PLAY:UPLOADED`, `BOOT:SAVE`,
+`BOOT:CLEAR`, and touch alerts.
+
+BLE uses a Nordic UART-style GATT shape:
+
+```txt
+Service: 6e400001-b5a3-f393-e0a9-e50e24dcca9e
+RX write: 6e400002-b5a3-f393-e0a9-e50e24dcca9e
+TX notify: 6e400003-b5a3-f393-e0a9-e50e24dcca9e
+```
+
+Converted animation asset upload still uses USB Serial. BLE is intentionally
+not used for AVF1 uploads because the current assets are too large for a good
+GATT-write experience.
+
+## Lottie Animation Preview
+
+The host app renders a browser-side Lottie animation inside the circular device
+preview. The prototype asset lives at:
+
+```txt
+apps/agent-visualizer/src/animations/agent-orb.lottie.json
+```
+
+To test a different Lottie file, replace that JSON file and keep the import in
+`src/App.tsx`. The browser can render raw Lottie through `lottie-react`, but the
+ESP32-C3 firmware should not render arbitrary Lottie JSON directly. For device
+playback, convert selected animations into small frame sequences, sprite sheets,
+or compact firmware drawing commands in a later iteration.
+
+## Public Lottie Firmware Test
+
+The first firmware animation test uses the public MIT sample bundled with
+`lottie-web`:
+
+```txt
+node_modules/lottie-web/test/animations/starfish.json
+```
+
+Generate the firmware frames from the repo root:
+
+```bash
+node apps/agent-visualizer/firmware/tools/render-public-lottie.mjs
+```
+
+The generator renders public Lottie frames through Chrome headless, crops the
+visible animation area, and writes 16 frames at 180x180:
+
+```txt
+apps/agent-visualizer/firmware/src/public_lottie_frames.h
+```
+
+The ESP32 does not parse the Lottie JSON at runtime. It plays the converted
+RGB565 frames embedded in firmware. Trigger it from the browser with the Lottie
+button or over serial:
+
+```txt
+ANIM:PUBLIC_LOTTIE
+```
+
+## Admin Lottie Upload
+
+The host app can now load a Lottie JSON file from the Admin asset panel and
+convert it locally into the firmware playback format. The browser renders the
+animation off-screen, crops the visible content, encodes 16 frames at 180x180
+and 12 fps, then uploads the binary asset to the ESP32 over Web Serial at
+921600 baud.
+
+Current prototype limits:
+
+```txt
+Format: AVF1 RGB565 RLE
+Size: 180x180
+Frames: 16
+FPS: 12
+Max upload: 760000 bytes
+Storage: /current.anim in SPIFFS
+```
+
+After conversion, use `Subir` to send the asset. The browser sends 2048-byte
+binary chunks
+and waits for a ready/received ACK around every chunk so the ESP32 serial parser
+is not overrun. Use `Play uploaded` or send the serial command directly:
+
+```txt
+ANIM:PLAY:UPLOADED
+```
+
+This is still a conversion pipeline, not a runtime Lottie or Rive player on the
+ESP32. The device stores and plays compact RGB565 frame data.
+
+Use `Guardar` to keep a converted asset in the dashboard's local gallery. The
+gallery is stored in the browser through IndexedDB and keeps the converted AVF1
+bytes plus metadata, so saved animations can be selected and uploaded again
+without reconverting the source JSON. The ESP32 still has one active uploaded
+animation slot: choosing `Usar` from the gallery uploads that asset immediately,
+replaces the current `/current.anim` on the device, and starts playback with
+`ANIM:PLAY:UPLOADED`. Use `Cargar` when you only want to select the asset in the
+panel before uploading.
+
+To make the current visual state survive power loss, start the desired state
+from the dashboard and then press `Perpetuar`. For an uploaded animation, the
+saved boot mode is interactive: the device boots to standby, waits for touch,
+plays the uploaded animation for a few seconds, and then returns to standby.
+The dashboard flow is:
+
+```txt
+Play uploaded
+Perpetuar
+```
+
+The firmware stores the boot state in SPIFFS as `/boot.state` and restores it on
+the next boot. Use `Reset boot` to clear the saved boot state and return to the
+default standby startup.
+
 ## Flash The Firmware
 
 Install PlatformIO if needed:
@@ -129,7 +254,7 @@ pio run -t upload
 Open serial monitor:
 
 ```bash
-pio device monitor -b 115200
+pio device monitor -b 921600
 ```
 
 If upload fails, hold `BOOT`, tap `RESET`, then release `BOOT` and retry.
@@ -142,12 +267,24 @@ Commands are line-delimited UTF-8:
 HELLO
 PING
 INFO
+ANIM:PUBLIC_LOTTIE
+ANIM:PLAY:UPLOADED
+BOOT:SAVE
+BOOT:CLEAR
+UPLOAD:BINARY:BEGIN:<totalBytes>:<crc32hex>
+UPLOAD:BINARY:CHUNK:<byteLength>
+<byteLength raw bytes>
+UPLOAD:END
+UPLOAD:HEX:<hex>
 STATE:standby
 STATE:working
 STATE:error
 STATE:done
 TEXT:Hola Agent Visualizer
 ```
+
+The same short command lines can be sent through BLE RX. Binary upload commands
+remain USB Serial only.
 
 Firmware acknowledgement examples:
 
@@ -157,6 +294,21 @@ ACK:HELLO:agent-visualizer
 ACK:PONG
 INFO:MCU:ESP32-C3
 INFO:DISPLAY:GC9A01
+INFO:SPIFFS:ready
+INFO:SPIFFS_BYTES:<used>/<total>
+INFO:ASSET:uploaded
+INFO:BOOT:tap-uploaded-animation
+INFO:BLE:advertising
+INFO:BLE:connected
+ACK:ANIM:PUBLIC_LOTTIE
+ACK:BOOT:SAVE:<state>
+ACK:ANIM:STOP:UPLOADED
+ACK:BOOT:CLEAR
+ACK:UPLOAD:BEGIN
+ACK:UPLOAD:BINARY:READY:<byteLength>
+ACK:UPLOAD:CHUNK:<receivedBytes>
+ACK:UPLOAD:END:<totalBytes>
+ACK:ANIM:PLAY:UPLOADED
 ACK:STATE:working
 ACK:TEXT:Hola Agent Visualizer
 ALERT:TOUCH_PRESS:120:96:0

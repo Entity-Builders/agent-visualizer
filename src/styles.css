@@ -66,10 +66,57 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(67, 185, 127, 0.24);
 }
 
+input[type="file"] {
+  min-height: 0;
+  padding: 9px 10px;
+}
+
 .app-shell {
   width: min(1180px, calc(100vw - 32px));
   margin: 0 auto;
   padding: 28px 0 36px;
+}
+
+.touch-signal-banner {
+  position: fixed;
+  z-index: 20;
+  top: 14px;
+  left: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: min(720px, calc(100vw - 28px));
+  padding: 14px 16px;
+  border: 2px solid #15191d;
+  border-radius: 8px;
+  background: #ffbf47;
+  color: #101417;
+  box-shadow: 0 18px 60px rgba(16, 20, 23, 0.3);
+  transform: translateX(-50%);
+  animation: banner-drop 280ms ease-out;
+}
+
+.touch-signal-banner div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.touch-signal-banner strong {
+  font-size: 1.08rem;
+  line-height: 1;
+}
+
+.touch-signal-banner span {
+  font-size: 0.86rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.touch-signal-banner button {
+  min-height: 34px;
+  padding: 0 12px;
 }
 
 .hero-band {
@@ -152,6 +199,7 @@ h1 {
 }
 
 .device-stage {
+  position: relative;
   display: grid;
   place-items: center;
   align-content: center;
@@ -161,6 +209,26 @@ h1 {
     linear-gradient(135deg, rgba(16, 20, 23, 0.06), transparent),
     #e3ddd1;
   border: 1px solid #cfc7bb;
+  overflow: hidden;
+}
+
+.device-stage--touch {
+  border-color: #ffbf47;
+  box-shadow:
+    0 0 0 4px rgba(255, 191, 71, 0.28),
+    0 24px 90px rgba(255, 191, 71, 0.24);
+  animation: stage-touch-flash 1200ms ease-out;
+}
+
+.device-stage--touch::before {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 50% 44%, rgba(255, 191, 71, 0.38), transparent 42%),
+    linear-gradient(135deg, rgba(255, 132, 111, 0.18), rgba(67, 185, 127, 0.12));
+  content: "";
+  pointer-events: none;
+  animation: stage-touch-wash 1300ms ease-out;
 }
 
 .device-preview {
@@ -186,6 +254,21 @@ h1 {
     radial-gradient(circle at 50% 18%, rgba(255, 255, 255, 0.16), transparent 23%),
     #172026;
   content: "";
+}
+
+.lottie-robot {
+  position: absolute;
+  z-index: 1;
+  width: 82%;
+  height: 82%;
+  pointer-events: none;
+}
+
+.lottie-robot svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 0 22px rgba(203, 255, 109, 0.2));
 }
 
 .device-preview--standby::before {
@@ -214,9 +297,14 @@ h1 {
 
 .screen-face {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   width: 154px;
   height: 92px;
+}
+
+.screen-face--fallback {
+  opacity: 0.16;
+  pointer-events: none;
 }
 
 .screen-eye,
@@ -277,8 +365,8 @@ h1 {
 
 .screen-text {
   position: absolute;
-  z-index: 2;
-  bottom: 52px;
+  z-index: 3;
+  bottom: 38px;
   left: 0;
   right: 0;
   display: grid;
@@ -297,17 +385,59 @@ h1 {
   color: rgba(255, 253, 247, 0.76);
   font-size: 0.72rem;
   font-weight: 800;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.48);
+}
+
+.screen-text strong {
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.58);
 }
 
 .touch-ripple {
   position: absolute;
-  z-index: 3;
-  width: 74px;
-  height: 74px;
-  border: 3px solid #ffbf47;
+  z-index: 5;
+  width: 210px;
+  height: 210px;
+  border: 6px solid #ffbf47;
   border-radius: 50%;
-  animation: touch-pulse 900ms ease-out forwards;
-  box-shadow: 0 0 28px rgba(255, 191, 71, 0.46);
+  animation: touch-pulse 1200ms ease-out forwards;
+  box-shadow:
+    0 0 44px rgba(255, 191, 71, 0.72),
+    inset 0 0 28px rgba(255, 253, 247, 0.3);
+}
+
+.touch-screen-alert {
+  position: absolute;
+  z-index: 4;
+  inset: 22%;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 3px solid #fffdf7;
+  border-radius: 50%;
+  background: rgba(255, 191, 71, 0.94);
+  color: #101417;
+  text-align: center;
+  text-transform: uppercase;
+  box-shadow: 0 0 38px rgba(255, 191, 71, 0.74);
+  animation: touch-screen-slam 1300ms ease-out;
+}
+
+.touch-screen-alert span {
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.touch-screen-alert strong {
+  font-size: 1.9rem;
+  line-height: 0.94;
+}
+
+.touch-screen-alert small {
+  max-width: 150px;
+  font-size: 0.58rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
 }
 
 .hardware-note {
@@ -362,11 +492,12 @@ h1 {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px;
-  border: 1px solid #d45f36;
+  padding: 16px;
+  border: 2px solid #15191d;
   border-radius: 8px;
-  background: #fff3db;
+  background: #ffbf47;
   color: #15191d;
+  box-shadow: 0 12px 34px rgba(255, 191, 71, 0.24);
 }
 
 .touch-alert div {
@@ -376,8 +507,9 @@ h1 {
 }
 
 .touch-alert span {
-  color: #6a5540;
+  color: #3e301d;
   font-size: 0.86rem;
+  font-weight: 750;
   overflow-wrap: anywhere;
 }
 
@@ -393,7 +525,7 @@ h1 {
 }
 
 .button-row {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
 }
 
 .state-grid {
@@ -451,6 +583,223 @@ h1 {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 112px;
   gap: 10px;
+}
+
+.asset-admin-panel {
+  display: grid;
+  gap: 12px;
+  padding: 15px 0;
+  border-top: 1px solid #e0d8cb;
+  border-bottom: 1px solid #e0d8cb;
+}
+
+.asset-admin-heading {
+  margin-bottom: 0;
+}
+
+.asset-admin-heading span {
+  max-width: 210px;
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-picker {
+  display: grid;
+  gap: 7px;
+}
+
+.file-picker span {
+  color: #4d5357;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.asset-admin-actions {
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
+}
+
+.asset-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.asset-metrics div {
+  min-width: 0;
+  padding: 8px;
+  border-radius: 8px;
+  background: #f6f0e6;
+}
+
+.asset-metrics dt,
+.asset-metrics dd {
+  margin: 0;
+}
+
+.asset-metrics dt {
+  color: #72706b;
+  font-size: 0.7rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.asset-metrics dd {
+  margin-top: 2px;
+  color: #15191d;
+  font-size: 0.84rem;
+  font-weight: 850;
+  overflow-wrap: anywhere;
+}
+
+.asset-progress {
+  height: 10px;
+  border-radius: 999px;
+  background: #eee6d8;
+  overflow: hidden;
+}
+
+.asset-progress span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #43b97f;
+  transition: width 140ms ease;
+}
+
+.asset-status {
+  margin: 0;
+  color: #4d5357;
+  font-size: 0.86rem;
+  font-weight: 750;
+  overflow-wrap: anywhere;
+}
+
+.asset-gallery {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+
+.asset-gallery-heading {
+  margin: 0;
+}
+
+.asset-gallery-empty {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px dashed #c8c0b3;
+  border-radius: 8px;
+  background: #f9f4eb;
+}
+
+.asset-gallery-empty-mark {
+  display: grid;
+  place-items: center;
+  min-height: 46px;
+  border-radius: 8px;
+  background: #15191d;
+  color: #fffdf7;
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.asset-gallery-empty div,
+.asset-gallery-list,
+.asset-gallery-main {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.asset-gallery-empty strong,
+.asset-gallery-main strong {
+  color: #15191d;
+  overflow-wrap: anywhere;
+}
+
+.asset-gallery-empty span:last-child,
+.asset-gallery-main span {
+  color: #62686d;
+  font-size: 0.78rem;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.asset-gallery-list {
+  gap: 8px;
+  max-height: 280px;
+  overflow: auto;
+}
+
+.asset-gallery-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #e0d8cb;
+  border-radius: 8px;
+  background: #f9f4eb;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    transform 140ms ease;
+}
+
+.asset-gallery-item:hover {
+  border-color: #c8c0b3;
+  transform: translateY(-1px);
+}
+
+.asset-gallery-item--selected {
+  border-color: #43b97f;
+  box-shadow: 0 0 0 3px rgba(67, 185, 127, 0.16);
+}
+
+.asset-gallery-main code {
+  justify-self: start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  padding: 3px 6px;
+  font-size: 0.72rem;
+}
+
+.asset-gallery-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(64px, 1fr));
+  gap: 6px;
+}
+
+.asset-gallery-actions button {
+  min-height: 36px;
+  padding: 0 10px;
+  font-size: 0.8rem;
+}
+
+.asset-gallery-actions button:nth-child(2) {
+  background: #fffdf7;
+  color: #15191d;
+}
+
+.asset-gallery-actions button:nth-child(2):hover:not(:disabled) {
+  background: #f3ece0;
+}
+
+.asset-gallery-actions button:last-child {
+  border-color: #d45f36;
+  background: #fff0e9;
+  color: #622817;
+}
+
+.asset-gallery-actions button:last-child:hover:not(:disabled) {
+  background: #ffe0d2;
 }
 
 .protocol-panel {
@@ -550,14 +899,68 @@ ol {
 @keyframes touch-pulse {
   0% {
     opacity: 0;
-    transform: scale(0.35);
+    transform: scale(0.2);
   }
   20% {
     opacity: 1;
   }
   100% {
     opacity: 0;
-    transform: scale(1.55);
+    transform: scale(1.6);
+  }
+}
+
+@keyframes touch-screen-slam {
+  0% {
+    opacity: 0;
+    transform: scale(0.55) rotate(-3deg);
+  }
+  16% {
+    opacity: 1;
+    transform: scale(1.08) rotate(1deg);
+  }
+  32% {
+    transform: scale(1) rotate(0);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes stage-touch-flash {
+  0%,
+  100% {
+    transform: none;
+  }
+  12% {
+    transform: translateY(-2px);
+  }
+  24% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes stage-touch-wash {
+  0% {
+    opacity: 0;
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.58;
+  }
+}
+
+@keyframes banner-drop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -18px);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0);
   }
 }
 
@@ -596,13 +999,29 @@ ol {
 
   .button-row,
   .state-grid,
+  .asset-admin-actions,
+  .asset-gallery-item,
   .text-command div {
     grid-template-columns: 1fr;
+  }
+
+  .asset-gallery-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .asset-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .device-preview {
     width: min(300px, 86vw);
     border-width: 12px;
+  }
+
+  .touch-signal-banner {
+    align-items: stretch;
+    flex-direction: column;
+    top: 10px;
   }
 
   .touch-alert {
